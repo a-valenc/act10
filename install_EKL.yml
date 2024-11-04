@@ -1,0 +1,198 @@
+---
+- hosts: elasticsearch
+  become: true
+  tasks:
+    - name: Installing ElasticSearch prerequisites (Ubuntu)
+      apt:
+        name: "{{item}}"
+        state: present
+      loop:
+        - apt-transport-https
+        - openjdk-11-jdk
+        - wget
+        - gnupg2
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Installing ElasticSearch prerequisites (CentOS)
+      yum:
+        name: "{{item}}"
+        state: present
+      loop:
+        - java-11-openjdk-devel
+        - wget
+      when: ansible_distribution == "CentOS"
+
+    - name: Add ElasticSearch GPG (Ubuntu)
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Download and add Elasticsearch GPG key (CentOS)
+      rpm_key:
+        state: present
+        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      when: ansible_os_family == "RedHat"
+
+    - name: Add Elasticsearch repository (Ubuntu)
+      apt_repository:
+        repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add Elasticsearch repository (CentOS)
+      yum_repository:
+        name: elasticsearch
+        description: "Elastic repository"
+        baseurl: https://artifacts.elastic.co/packages/7.x/yum
+        gpgcheck: yes
+        gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        enabled: 1
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Elasticsearch
+      package:
+        name: elasticsearch
+        state: present
+
+    - name: Configure Elasticsearch
+      template:
+        src: elasticsearch.yml.j2
+        dest: /etc/elasticsearch/elasticsearch.yml
+
+    - name: Enable and start Elasticsearch service
+      systemd:
+        name: elasticsearch
+        enabled: yes
+        state: started
+
+- name: Install and configure Kibana
+  hosts: kibana
+  become: yes
+  tasks:
+    - name: Install prerequisite packages (Ubuntu)
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - wget
+        - gnupg2
+      when: ansible_os_family == "Debian"
+
+    - name: Install prerequisite packages (CentOS)
+      yum:
+        name: wget
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Download and add Kibana GPG key (Ubuntu)
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Download and add Kibana GPG key (CentOS)
+      rpm_key:
+        state: present
+        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      when: ansible_os_family == "RedHat"
+
+    - name: Add Kibana repository (Ubuntu)
+      apt_repository:
+        repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add Kibana repository (CentOS)
+      yum_repository:
+        name: kibana
+        description: "Elastic repository"
+        baseurl: https://artifacts.elastic.co/packages/7.x/yum
+        gpgcheck: yes
+        gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        enabled: 1
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Kibana
+      package:
+        name: kibana
+        state: present
+
+    - name: Configure Kibana
+      template:
+        src: kibana.yml.j2
+        dest: /etc/kibana/kibana.yml
+
+    - name: Enable and start Kibana service
+      systemd:
+        name: kibana
+        enabled: yes
+        state: started
+
+- name: Install and configure Logstash
+  hosts: logstash
+  become: yes
+  tasks:
+    - name: Install prerequisite packages (Ubuntu)
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - wget
+        - gnupg2
+      when: ansible_os_family == "Debian"
+
+    - name: Install prerequisite packages (CentOS)
+      yum:
+        name: wget
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Download and add Logstash GPG key (Ubuntu)
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Download and add Logstash GPG key (CentOS)
+      rpm_key:
+        state: present
+        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      when: ansible_os_family == "RedHat"
+
+    - name: Add Logstash repository (Ubuntu)
+      apt_repository:
+        repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add Logstash repository (CentOS)
+      yum_repository:
+        name: logstash
+        description: "Elastic repository"
+        baseurl: https://artifacts.elastic.co/packages/7.x/yum
+        gpgcheck: yes
+        gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        enabled: 1
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Logstash
+      package:
+        name: logstash
+        state: present
+
+    - name: Configure Logstash
+      template:
+        src: logstash.conf.j2
+        dest: /etc/logstash/conf.d/logstash.conf
+
+    - name: Enable and start Logstash service
+      systemd:
+        name: logstash
+        enabled: yes
+        state: started
